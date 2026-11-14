@@ -1,10 +1,19 @@
+
 {
   "name": "Hospital Companion",
   "short_name": "Duty Companion",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0b1220",
   "theme_color": "#101827",
-  "description": "Personal duty roster, notes, visits, contacts and local MLC archive.",
-  "icons": []
+  "description": "Personal hospital duty management app",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
