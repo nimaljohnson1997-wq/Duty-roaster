@@ -1,3 +1,4 @@
+
 const CACHE = 'hospital-companion-v2';
 
 self.addEventListener('install', event => {
