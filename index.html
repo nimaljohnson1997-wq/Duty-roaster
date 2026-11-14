@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Hospital Companion</title>
+<style>
+:root{--bg:#0b1220;--panel:#121d2e;--panel2:#1a2940;--text:#edf3fb;--muted:#9aabc1;--line:#293950;--accent:#66b3a5;--day:#284d72;--night:#4a3c70;--both:#74502e;--off:#354253;--danger:#a94452}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px 16px 12px;background:#101827;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line)}
+h1{font-size:20px;margin:0}header small{color:var(--muted)}
+main{padding:14px 14px 90px;max-width:760px;margin:auto}.tabs{position:fixed;bottom:0;left:0;right:0;z-index:4;background:#101827;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
+.tabs button{background:none;border:0;color:var(--muted);font-size:11px;padding:7px 2px}.tabs button.active{color:var(--accent);font-weight:700}.tabs span{display:block;font-size:19px;margin-bottom:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+button,.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer}
+button.primary{background:var(--accent);color:#071b1a;border-color:var(--accent);font-weight:700}button.danger{background:#3a2029;border-color:#75404c;color:#ffdce1}
+input,select,textarea{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e1828;color:var(--text);font:inherit;margin:5px 0 12px}
+textarea{min-height:90px;resize:vertical}label{display:block;color:var(--muted);font-size:13px;margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.dow,.date{padding:8px 0;text-align:center;border-radius:9px;font-size:13px}.dow{color:var(--muted)}.date{background:#162338;min-height:42px;border:1px solid transparent}.date.today{border-color:var(--accent)}.date.empty{background:transparent}.date.day{background:var(--day)}.date.night{background:var(--night)}.date.both{background:var(--both)}.date.off{background:var(--off)}.date.selected{outline:2px solid white}
+.muted{color:var(--muted)}.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stat{background:var(--panel2);padding:12px;border-radius:12px}.stat b{font-size:22px;display:block}.item{padding:11px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}.item strong{display:block}.pill{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:3px 7px;border-radius:20px}
+.hidden{display:none!important}.section-title{font-size:17px;font-weight:700;margin:8px 0}.small{font-size:12px}.fileline{display:flex;justify-content:space-between;gap:8px;align-items:center}
+#lock{max-width:440px;margin:12vh auto;padding:18px}.hint{font-size:12px;color:var(--muted);line-height:1.45}
+</style>
+</head>
+<body>
+<header><div class="row between"><div><h1>Hospital Companion</h1><small>Personal duty & work organiser</small></div><span class="pill" id="secureStatus">Locked data</span></div></header>
+<section id="lock" class="card">
+  <h2 id="lockTitle">Create your private vault</h2>
+  <p class="hint">Your records stay in this browser on this device. Choose a passphrase you will remember. If you forget it, encrypted records cannot be recovered.</p>
+  <label>Passphrase</label><input id="pass1" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+  <label id="confirmLabel">Confirm passphrase</label><input id="pass2" type="password" autocomplete="new-password">
+  <button class="primary" id="unlockBtn">Create vault</button>
+  <p id="lockMsg" class="hint"></p>
+</section>
+<div id="app" class="hidden">
+<main>
+<section id="homePage">
+ <div class="card">
+  <div class="row between"><div><div class="muted small">TODAY</div><div id="todayLabel" class="section-title"></div></div><span class="pill" id="todayDuty">No duty marked</span></div>
+  <div class="item"><span class="muted small">UPCOMING DUTY</span><strong id="nextDuty">No upcoming duty entered</strong><span id="countdown" class="muted small"></span></div>
+  <div class="row"><button class="primary" onclick="showPage('dutyPage')">Open duty calendar</button><button onclick="showPage('notesPage')">Quick note</button></div>
+ </div>
+ <div class="statgrid">
+  <div class="stat"><span class="muted small">Day duties this month</span><b id="dayCount">0</b></div>
+  <div class="stat"><span class="muted small">Night duties this month</span><b id="nightCount">0</b></div>
+  <div class="stat"><span class="muted small">MLC files</span><b id="mlcCount">0</b></div>
+  <div class="stat"><span class="muted small">Visits recorded</span><b id="visitCount">0</b></div>
+ </div>
+ <div class="card"><div class="section-title">Quick access</div><div class="row"><button onclick="showPage('contactsPage')">☎ Contacts</button><button onclick="showPage('visitsPage')">＋ Visit</button><button onclick="showPage('mlcPage')">＋ MLC file</button></div></div>
+</section>
+<section id="dutyPage" class="hidden">
+ <div class="row between"><div class="section-title">Duty calendar</div><span class="pill">2026 calendar accurate</span></div>
+ <div class="card">
+  <div class="row between"><button id="prevMonth">‹</button><strong id="monthTitle"></strong><button id="nextMonth">›</button></div>
+  <div class="grid" id="calendar" style="margin-top:12px"></div>
+  <div class="hint" style="margin-top:10px">Tap a date to select it, then choose the duty type below. Both counts as one day duty and one night duty.</div>
+  <label>Selected date</label><strong id="selectedDate">—</strong>
+  <label>Duty type</label><select id="dutyType"><option value="">Not marked</option><option>Day</option><option>Night</option><option>Both</option><option>Off</option></select>
+  <label>Reminder</label><select id="reminder"><option value="0">No reminder</option><option value="15">15 minutes before</option><option value="30">30 minutes before</option><option value="60">1 hour before</option><option value="720">12 hours before</option><option value="1440">1 day before</option></select>
+  <button class="primary" id="saveDuty">Save duty</button>
+ </div>
+ <div class="card"><div class="section-title">This month</div><div class="statgrid"><div class="stat"><span class="muted small">Day duties</span><b id="mDay">0</b></div><div class="stat"><span class="muted small">Night duties</span><b id="mNight">0</b></div><div class="stat"><span class="muted small">Both</span><b id="mBoth">0</b></div><div class="stat"><span class="muted small">Off</span><b id="mOff">0</b></div></div></div>
+</section>
+<section id="notesPage" class="hidden">
+ <div class="section-title">Notes</div><div class="card">
+ <label>Title</label><input id="noteTitle" placeholder="Note title"><label>Note</label><textarea id="noteText" placeholder="Write a note or task..."></textarea><button class="primary" id="addNote">Save note</button></div>
+ <div class="card"><div class="section-title">Saved notes</div><div id="notesList"></div></div>
+</section>
+<section id="visitsPage" class="hidden">
+ <div class="section-title">Visit register</div><div class="card">
+ <label>Date</label><input type="date" id="visitDate"><label>Place / department</label><input id="visitPlace" placeholder="Department or location"><label>Purpose / brief note</label><textarea id="visitPurpose"></textarea><label>Follow-up date (optional)</label><input type="date" id="visitFollow"><button class="primary" id="addVisit">Save visit</button></div>
+ <div class="card"><div class="section-title">Visits</div><div id="visitsList"></div></div>
+</section>
+<section id="contactsPage" class="hidden">
+ <div class="section-title">Hospital contacts</div><div class="card">
+ <label>Department / category</label><input id="contactDept" placeholder="e.g. Casualty, Lab, Radiology"><label>Name</label><input id="contactName" placeholder="Person or desk name"><label>Phone number</label><input id="contactPhone" type="tel" placeholder="Mobile / landline"><label>Intercom / extension</label><input id="contactExt" placeholder="Extension number"><button class="primary" id="addContact">Save contact</button></div>
+ <div class="card"><div class="section-title">Directory</div><input id="contactSearch" placeholder="Search contacts"><div id="contactsList"></div></div>
+</section>
+<section id="mlcPage" class="hidden">
+ <div class="section-title">MLC document archive</div><div class="card">
+ <p class="hint">Attach scanned images or PDFs. Add only the minimum index details needed to find the document. Files are encrypted inside this browser vault.</p>
+ <label>MLC number / reference</label><input id="mlcRef" placeholder="MLC reference"><label>Case date</label><input id="mlcDate" type="date"><label>Optional category / short label</label><input id="mlcLabel" placeholder="e.g. RTA, assault"><label>Scan / photo / PDF</label><input id="mlcFile" type="file" accept="image/*,application/pdf" multiple><label>Remarks (optional)</label><textarea id="mlcRemarks"></textarea><button class="primary" id="addMlc">Save to archive</button></div>
+ <div class="card"><div class="section-title">Archive</div><input id="mlcSearch" placeholder="Search reference, date or category"><div id="mlcList"></div></div>
+</section>
+<section id="settingsPage" class="hidden">
+ <div class="section-title">Settings & backup</div><div class="card">
+ <p class="hint">This prototype stores records only in this browser profile. Clearing browser data or uninstalling/resetting the browser may erase the vault. Export a backup regularly and keep it in a secure location.</p>
+ <button id="exportBackup">Export encrypted backup</button> <button id="importBackup">Import backup</button><input type="file" id="backupFile" accept=".json" class="hidden">
+ <hr style="border-color:var(--line);margin:16px 0"><button class="danger" id="lockNow">Lock vault</button>
+ <p class="hint">Duty reminders are checked while the app is open. Browser notification permission is required. This prototype cannot guarantee alarms when Android has suspended or closed the browser.</p><button id="enableNotif">Enable notifications</button>
+ </div>
+</section>
+</main>
+<nav class="tabs">
+ <button class="active" data-page="homePage"><span>⌂</span>Home</button>
+ <button data-page="dutyPage"><span>▦</span>Duty</button>
+ <button data-page="notesPage"><span>✎</span>Notes</button>
+ <button data-page="more"><span>•••</span>More</button>
+</nav>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const DB='hospital-companion-v1', STORE='vault';
+let key=null, data={duties:{},notes:[],visits:[],contacts:[],mlcs:[]}, monthCursor=new Date(2026,0,1), selected=null, db;
+function openDB(){return new Promise((res,rej)=>{let q=indexedDB.open(DB,1);q.onupgradeneeded=()=>q.result.createObjectStore(STORE);q.onsuccess=()=>{db=q.result;res()};q.onerror=()=>rej(q.error)})}
+function getVault(){return new Promise((res,rej)=>{let q=db.transaction(STORE).objectStore(STORE).get('data');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+function putVault(v){return new Promise((res,rej)=>{let tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,'data');tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}
+const enc=new TextEncoder(), dec=new TextDecoder();
+function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
+function unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+async function derive(pass,salt){let base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encryptData(){let iv=crypto.getRandomValues(new Uint8Array(12));let bytes=enc.encode(JSON.stringify(data));let cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,bytes);await putVault({iv:b64(iv),cipher:b64(cipher),salt:window.vaultSalt})}
+async function decryptVault(v){key=await derive($('pass1').value,unb64(v.salt));let plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(v.iv)},key,unb64(v.cipher));data=JSON.parse(dec.decode(plain));window.vaultSalt=v.salt}
+async function init(){await openDB();let v=await getVault();if(v){$('lockTitle').textContent='Unlock your vault';$('confirmLabel').classList.add('hidden');$('pass2').classList.add('hidden');$('unlockBtn').textContent='Unlock';}else{$('lockTitle').textContent='Create your private vault';}}
+$('unlockBtn').onclick=async()=>{try{let v=await getVault(),p=$('pass1').value;if(!p){$('lockMsg').textContent='Enter a passphrase.';return}if(v){await decryptVault(v)}else{if(p.length<8){$('lockMsg').textContent='Use at least 8 characters.';return}if(p!==$('pass2').value){$('lockMsg').textContent='Passphrases do not match.';return}window.vaultSalt=b64(crypto.getRandomValues(new Uint8Array(16)));key=await derive(p,unb64(window.vaultSalt));await encryptData()}$('lock').classList.add('hidden');$('app').classList.remove('hidden');$('secureStatus').textContent='Encrypted local vault';renderAll();checkReminders()}catch(e){$('lockMsg').textContent='Could not unlock. Check your passphrase.';key=null}};
+function save(){return encryptData()}
+function showPage(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));if(id==='more')id='settingsPage';$(id).classList.remove('hidden');document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.page===id||(id==='settingsPage'&&b.dataset.page==='more')));renderAll()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function nice(d){return d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function renderCalendar(){let y=monthCursor.getFullYear(),m=monthCursor.getMonth();$('monthTitle').textContent=monthCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});let first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="dow">${x}</div>`).join('');for(let i=0;i<first;i++)h+='<div class="date empty"></div>';for(let d=1;d<=days;d++){let dt=new Date(y,m,d),k=dateKey(dt),v=data.duties[k]?.type||'',cls=v.toLowerCase();if(k===dateKey(new Date()))cls+=' today';if(selected===k)cls+=' selected';h+=`<button class="date ${cls}" data-date="${k}">${d}</button>`}$('calendar').innerHTML=h;document.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>selectDate(b.dataset.date));let k=selected||dateKey(new Date());if(!selected)selectDate(k,false);renderMonthStats()}
+function selectDate(k,rerender=true){selected=k;$('selectedDate').textContent=nice(new Date(k+'T12:00:00'));$('dutyType').value=data.duties[k]?.type||'';$('reminder').value=String(data.duties[k]?.reminder||0);if(rerender)renderCalendar()}
+$('prevMonth').onclick=()=>{monthCursor=new Date(monthCursor.getFullYear(),monthCursor.getMonth()-1,1);renderCalendar()};$('nextMonth').onclick=()=>{monthCursor=new Date(monthCursor.getFullYear(),monthCursor.getMonth()+1,1);renderCalendar()};
+$('saveDuty').onclick=async()=>{if(!selected)return;let type=$('dutyType').value;if(type)data.duties[selected]={type,reminder:Number($('reminder').value)};else delete data.duties[selected];await save();renderAll()};
+function renderMonthStats(){let vals=Object.entries(data.duties).filter(([k])=>k.startsWith(monthCursor.getFullYear()+'-'+String(monthCursor.getMonth()+1).padStart(2,'0'))).map(x=>x[1].type);$('mDay').textContent=vals.filter(x=>x==='Day'||x==='Both').length;$('mNight').textContent=vals.filter(x=>x==='Night'||x==='Both').length;$('mBoth').textContent=vals.filter(x=>x==='Both').length;$('mOff').textContent=vals.filter(x=>x==='Off').length}
+function renderHome(){let now=new Date(),k=dateKey(now),t=data.duties[k]?.type||'No duty marked';$('todayLabel').textContent=nice(now);$('todayDuty').textContent=t;let upcoming=Object.keys(data.duties).filter(x=>x>=k&&['Day','Night','Both'].includes(data.duties[x].type)).sort()[0];if(upcoming){let dt=new Date(upcoming+'T09:00:00');$('nextDuty').textContent=nice(new Date(upcoming+'T12:00:00'))+' · '+data.duties[upcoming].type;$('countdown').textContent=upcoming===k?'Today':Math.ceil((new Date(upcoming+'T00:00:00')-new Date(k+'T00:00:00'))/86400000)+' day(s) away'}else{$('nextDuty').textContent='No upcoming duty entered';$('countdown').textContent=''}let prefix=k.slice(0,7),vals=Object.entries(data.duties).filter(([x])=>x.startsWith(prefix)).map(x=>x[1].type);$('dayCount').textContent=vals.filter(x=>x==='Day'||x==='Both').length;$('nightCount').textContent=vals.filter(x=>x==='Night'||x==='Both').length;$('mlcCount').textContent=data.mlcs.length;$('visitCount').textContent=data.visits.length}
+function renderNotes(){$('notesList').innerHTML=data.notes.slice().reverse().map((n,i)=>`<div class="item"><strong>${esc(n.title||'Untitled note')}</strong><div class="muted small">${esc(n.date)}</div><p>${esc(n.text)}</p><button onclick="del('notes',${data.notes.length-1-i})">Delete</button></div>`).join('')||'<p class="muted">No notes yet.</p>'}
+function renderVisits(){$('visitsList').innerHTML=data.visits.slice().reverse().map((v,i)=>`<div class="item"><strong>${esc(v.place||'Visit')}</strong><span class="muted small">${esc(v.date)}${v.follow?' · Follow-up: '+esc(v.follow):''}</span><p>${esc(v.purpose)}</p><button onclick="del('visits',${data.visits.length-1-i})">Delete</button></div>`).join('')||'<p class="muted">No visits recorded.</p>'}
+function renderContacts(){let q=$('contactSearch').value.toLowerCase();$('contactsList').innerHTML=data.contacts.filter(c=>(c.dept+c.name+c.phone+c.ext).toLowerCase().includes(q)).map((c)=>`<div class="item"><strong>${esc(c.dept)} · ${esc(c.name)}</strong><div class="muted small">${c.ext?'Intercom: '+esc(c.ext):''} ${c.phone?' · '+esc(c.phone):''}</div><div class="row">${c.phone?`<a class="btn" href="tel:${encodeURIComponent(c.phone)}">Call</a>`:''}<button onclick="delById('contacts','${c.id}')">Delete</button></div></div>`).join('')||'<p class="muted">No contacts saved.</p>'}
+function renderMlcs(){let q=$('mlcSearch').value.toLowerCase();$('mlcList').innerHTML=data.mlcs.filter(m=>(m.ref+m.date+m.label).toLowerCase().includes(q)).slice().reverse().map(m=>`<div class="item"><strong>${esc(m.ref||'MLC')} · ${esc(m.label||'')}</strong><div class="muted small">${esc(m.date)} · ${m.files.length} attachment(s)</div>${m.remarks?`<p>${esc(m.remarks)}</p>`:''}${m.files.map((f,i)=>`<div class="fileline"><span class="small">${esc(f.name)}</span><button onclick="openMlcFile('${m.id}',${i})">View</button></div>`).join('')}<button onclick="delById('mlcs','${m.id}')">Delete record</button></div>`).join('')||'<p class="muted">No MLC files archived.</p>'}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+window.del=async(type,i)=>{if(confirm('Delete this entry?')){data[type].splice(i,1);await save();renderAll()}}
+window.delById=async(type,id)=>{if(confirm('Delete this record?')){data[type]=data[type].filter(x=>x.id!==id);await save();renderAll()}}
+window.openMlcFile=(id,i)=>{let m=data.mlcs.find(x=>x.id===id),f=m.files[i],a=document.createElement('a');a.href=f.data;a.target='_blank';a.download=f.name;a.click()}
+$('addNote').onclick=async()=>{if(!$('noteText').value.trim())return;data.notes.push({title:$('noteTitle').value,text:$('noteText').value,date:dateKey(new Date())});$('noteTitle').value='';$('noteText').value='';await save();renderAll()}
+$('addVisit').onclick=async()=>{if(!$('visitDate').value||!$('visitPlace').value.trim())return alert('Enter a date and place.');data.visits.push({id:crypto.randomUUID(),date:$('visitDate').value,place:$('visitPlace').value,purpose:$('visitPurpose').value,follow:$('visitFollow').value});$('visitPlace').value='';$('visitPurpose').value='';$('visitFollow').value='';await save();renderAll()}
+$('addContact').onclick=async()=>{if(!$('contactDept').value.trim()&&!$('contactName').value.trim())return alert('Enter a department or name.');data.contacts.push({id:crypto.randomUUID(),dept:$('contactDept').value,name:$('contactName').value,phone:$('contactPhone').value,ext:$('contactExt').value});['contactDept','contactName','contactPhone','contactExt'].forEach(x=>$(x).value='');await save();renderAll()}
+$('contactSearch').oninput=renderContacts;$('mlcSearch').oninput=renderMlcs;
+$('addMlc').onclick=async()=>{let files=[...$('mlcFile').files];if(!files.length)return alert('Choose at least one scan, photo or PDF.');let attachments=[];for(let f of files){if(f.size>12*1024*1024)return alert('Each file must be 12 MB or smaller.');attachments.push({name:f.name,type:f.type,data:await new Promise((res,rej)=>{let r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})})}data.mlcs.push({id:crypto.randomUUID(),ref:$('mlcRef').value,date:$('mlcDate').value||dateKey(new Date()),label:$('mlcLabel').value,remarks:$('mlcRemarks').value,files:attachments});['mlcRef','mlcLabel','mlcRemarks','mlcFile'].forEach(x=>$(x).value='');await save();renderAll()}
+async function checkReminders(){if(!('Notification'in window)||Notification.permission!=='granted')return;let now=Date.now();for(let [d,v] of Object.entries(data.duties)){if(!v.reminder||!['Day','Night','Both'].includes(v.type))continue;let hour=v.type==='Night'?19:8,when=new Date(d+'T00:00:00');when.setHours(hour,0,0,0);let delta=when.getTime()-now;if(delta>=0&&delta<=v.reminder*60000+60000){let id='reminded-'+d+'-'+v.type;if(!sessionStorage.getItem(id)){new Notification('Upcoming duty',{body:`${v.type} duty on ${new Date(d+'T12:00:00').toLocaleDateString()}`});sessionStorage.setItem(id,'1')}}}}
+$('enableNotif').onclick=async()=>{if('Notification'in window){let p=await Notification.requestPermission();alert('Notification permission: '+p)}else alert('Notifications are not supported in this browser.')};
+$('lockNow').onclick=()=>{key=null;data={duties:{},notes:[],visits:[],contacts:[],mlcs:[]};$('app').classList.add('hidden');$('lock').classList.remove('hidden');$('pass1').value='';$('pass2').value='';};
+$('exportBackup').onclick=async()=>{let v=await getVault(),blob=new Blob([JSON.stringify(v)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hospital-companion-encrypted-backup.json';a.click();URL.revokeObjectURL(a.href)}
+$('importBackup').onclick=()=>$('backupFile').click();$('backupFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let v=JSON.parse(await f.text());if(!v.iv||!v.cipher||!v.salt)throw 0;await putVault(v);alert('Backup imported. Reload and unlock with its original passphrase.');location.reload()}catch(_){alert('Invalid backup file.')}}
+function renderAll(){renderHome();renderCalendar();renderNotes();renderVisits();renderContacts();renderMlcs()}
+$('visitDate').value=dateKey(new Date());$('mlcDate').value=dateKey(new Date());
+setInterval(checkReminders,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&key)checkReminders()});
+init().catch(e=>{$('lockMsg').textContent='This browser does not support the required secure local storage.'});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+</script>
+</body></html>
